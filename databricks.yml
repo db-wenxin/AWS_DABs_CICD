@@ -1,0 +1,200 @@
+bundle:
+  name: DABsCICDDemo
+
+# User can store YAML definition files for various components in different folders to better orchestrate the code.
+include:
+  - resources/*.yml
+# 'run_as' must be set for all jobs when using 'mode: production'
+run_as: 
+  user_name: sample_user@example_databricks.com
+
+variables:
+  email_notifications_target:
+    description: The email to receive the job notifications.
+    default: sample_user@example_databricks.com
+  job_node_type:
+    description: The compute type for job cluster
+    default: r6i.large
+  dlt_node_type:
+    description: The compute type for dlt cluster
+    default: r6i.large
+  spark_version:
+    description: The Databricks cluster runtime version
+    default: 13.3.x-scala2.12
+  default_warehouseid:
+    description: Use this to query existing warehouse.
+    lookup:
+      warehouse: "Serverless Starter Warehouse"
+
+targets:
+  ############################################################
+  ## This target can be used for local test and development ##
+  ############################################################
+  development:
+    mode: development
+    workspace:
+      host: https://one-env-wx-frequent-rebuild.cloud.databricks.com
+      # The host name is configured by local databricks cli
+      root_path: ~/dev_local/${bundle.name}/${bundle.target}
+    resources:
+      jobs:
+        qa-test:
+          name: nutter-test
+          trigger:
+            periodic:
+              interval: 3
+              unit: HOURS
+          tasks:
+            - task_key: nutter-test
+              notebook_task:
+                notebook_path: ./src/nutter_test.ipynb
+              job_cluster_key: nutter_test_cluster
+            - task_key: sample-python-task
+              spark_python_task:
+                python_file: ./src/sample_python_task.py
+              job_cluster_key: nutter_test_cluster
+          job_clusters:
+            - job_cluster_key: nutter_test_cluster
+              new_cluster:
+                spark_version: ${var.spark_version}
+                node_type_id: ${var.job_node_type}
+                autoscale:
+                    min_workers: 1
+                    max_workers: 1
+                aws_attributes:
+                  ebs_volume_count: 1
+                  ebs_volume_size: 100
+                  ebs_volume_type: GENERAL_PURPOSE_SSD
+
+  qa:
+    workspace:
+      # The host url will be updated by the cicd runner using Linux 'sed' command.
+      host: QA
+      root_path: ~/.bundle/${bundle.name}/${bundle.target}
+    # create a QA only task for nutter test 
+    resources:
+      jobs:
+        nutter-test:
+          name: nutter-test
+          trigger:
+            periodic:
+              interval: 1
+              unit: HOURS
+          tasks:
+            - task_key: nutter-test
+              notebook_task:
+                notebook_path: ./src/nutter_test.ipynb
+            - task_key: sample-python-task
+              spark_python_task:
+                python_file: ./src/sample_python_task.py
+              environment_key: default
+            - task_key: downstream-sample
+              depends_on:
+                - task_key: nutter-test
+                - task_key: sample-python-task
+              spark_python_task:
+                python_file: ./src/downstream.py
+              environment_key: default
+          environments:
+            - environment_key: default
+              spec:
+                client: "1"
+                dependencies:
+                  - databricks-sdk == 0.42.0
+      #create a sample databricks app in QA target
+      apps:
+        sample_app:
+          name: "qa-sample-app"
+          source_code_path: ./src/apps/qa-app
+          description: "A Streamlit app that uses a SQL warehouse"
+          config:
+            command:
+              - "streamlit"
+              - "run"
+              - "app.py"
+            env:
+              - name: "DATABRICKS_WAREHOUSE_ID"
+                value: ${var.default_warehouseid}
+              - name: STREAMLIT_BROWSER_GATHER_USAGE_STATS
+                value: "false"
+          permissions:
+            - level: CAN_USE
+              group_name: users    
+
+          resources:
+            - name: "sql-warehouse"
+              description: "A SQL warehouse for app to be able to work with"
+              sql_warehouse:
+                id: ${var.default_warehouseid}
+                permission: "CAN_USE"
+
+  prod:
+    mode: production
+    presets:
+          name_prefix: 'PROD_' # prefix all resource names with PROD_
+    workspace:
+      # The host url will be updated by the cicd runner using Linux 'sed' command.
+      host: PROD
+      root_path: ~/.bundle/${bundle.name}/${bundle.target}
+    resources:
+      jobs:
+        nutter-test:
+          name: nutter-test
+          trigger:
+            periodic:
+              interval: 1
+              unit: HOURS
+          tasks:
+            - task_key: nutter-test
+              notebook_task:
+                notebook_path: ./src/nutter_test.ipynb
+            - task_key: sample-python-task
+              spark_python_task:
+                python_file: ./src/sample_python_task.py
+              job_cluster_key: nutter_test_cluster_prod
+            - task_key: downstream-sample
+              depends_on:
+                - task_key: nutter-test
+                - task_key: sample-python-task
+              spark_python_task:
+                python_file: ./src/sample_python_task.py
+              job_cluster_key: nutter_test_cluster_prod
+          job_clusters:
+            - job_cluster_key: nutter_test_cluster_prod
+              new_cluster:
+                spark_version: ${var.spark_version}
+                node_type_id: ${var.job_node_type}
+                autoscale:
+                    min_workers: 2
+                    max_workers: 2
+                aws_attributes:
+                  ebs_volume_count: 1
+                  ebs_volume_size: 100
+                  ebs_volume_type: GENERAL_PURPOSE_SSD
+
+        prodonly-cowsay:
+          name: prodonly-cowsay
+          trigger:
+            periodic:
+              interval: 1
+              unit: HOURS
+          tasks: # Example source: https://github.com/databricks/bundle-examples/blob/main/knowledge_base/private_wheel_packages/resources/cluster.job.yml
+            - task_key: task
+              job_cluster_key: default
+              spark_python_task:
+                python_file: ./src/cowsay.py
+              libraries:
+                - whl: ./dist/cowsay-6.1-*.whl
+
+          job_clusters:
+            - job_cluster_key: default
+              new_cluster:
+                spark_version: 15.4.x-scala2.12
+                node_type_id: i3.xlarge
+                data_security_mode: SINGLE_USER
+                num_workers: 0
+                spark_conf:
+                    "spark.databricks.cluster.profile": "singleNode"
+                    "spark.master": "local[*]"
+                custom_tags:
+                    "ResourceClass": "SingleNode"
