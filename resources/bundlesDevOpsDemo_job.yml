@@ -12,7 +12,6 @@ resources:
           - ${var.email_notifications_target}
       tasks:
         - task_key: notebook_task
-          job_cluster_key: job_cluster
           notebook_task:
             notebook_path: ../src/notebook.ipynb
         - task_key: refresh_pipeline

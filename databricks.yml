@@ -33,8 +33,8 @@ targets:
   development:
     mode: development
     workspace:
-      host: https://one-env-wx-frequent-rebuild.cloud.databricks.com
-      # The host name is configured by local databricks cli
+      # The host name can be configured by local databricks cli
+      #host: https://<xxxxxxxxx>.cloud.databricks.com
       root_path: ~/dev_local/${bundle.name}/${bundle.target}
     resources:
       jobs:
@@ -157,7 +157,7 @@ targets:
                 - task_key: nutter-test
                 - task_key: sample-python-task
               spark_python_task:
-                python_file: ./src/sample_python_task.py
+                python_file: ./src/downstream.py
               job_cluster_key: nutter_test_cluster_prod
           job_clusters:
             - job_cluster_key: nutter_test_cluster_prod
