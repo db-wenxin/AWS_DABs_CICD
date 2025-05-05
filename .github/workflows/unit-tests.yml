@@ -25,8 +25,6 @@ jobs:
           python -m pip install --upgrade pip
           # Install project dependencies
           pip install pytest pytest-cov
-          # Install project in development mode
-          pip install -e .
           
       - name: Run Tests
         run: |
@@ -37,14 +35,18 @@ jobs:
           import sys
           import os
           
-          # Add src to path for importing
-          sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+          
+          repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+          src_path = os.path.join(repo_root, 'src')
+          sys.path.append(src_path)
           
           try:
               from bundlesDevOpsDemo import main
               HAS_MODULE = True
           except ImportError:
               HAS_MODULE = False
+              print(f"导入失败。当前Python路径: {sys.path}")
+              print(f"src目录内容: {os.listdir(src_path) if os.path.exists(src_path) else '目录不存在'}")
           
           class TestMain(unittest.TestCase):
               def test_module_exists(self):
