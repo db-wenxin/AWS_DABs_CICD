@@ -10,7 +10,7 @@ The Python notebooks and pipelines used in this sample solution are **basic exam
 
 ## Prerequisites
 
-1. All Databricks workspaces (local dev workspace, QA workspace, and Prod workspace) and PAT tokens used in this solution are created separately.
+1. All Databricks workspaces (development workspace, QA workspace, and Prod workspace) and PAT tokens used in this solution are created separately.
 2. The GitHub repository must be configured with appropriate secrets for Databricks workspace URLs and PAT tokens.
 3. The workspaces used in this demo must have access to the public internet to run `pip install` for downloading public resources, such as [nutter](https://github.com/microsoft/nutter).
 4. For the introduction to Databricks Asset Bundles and Databricks CLI, please refer to:
@@ -39,16 +39,16 @@ We recommend creating Databricks PATs with an expiration date. Using access toke
 └─────────────────┘     └────────────────┘     └────────────────┘     └────────────────┘
                                                        │                      │
                                                        ▼                      ▼
-                                               ┌────────────────┐     ┌────────────────┐
-                                               │  Databricks    │     │  Databricks    │
-                                               │  QA Workspace  │     │  Prod Workspace│
-                                               └────────────────┘     └────────────────┘
+┌────────────────┐                             ┌────────────────┐     ┌────────────────┐
+|  (optional)    |                             │  Databricks    │     │  Databricks    │
+│  dev workspace │                             │  QA Workspace  │     │  Prod Workspace│
+└────────────────┘                             └────────────────┘     └────────────────┘
 ```
 
 ## High-level Workflow
 
-1. Users can use DABs `databricks bundle` commands to deploy the code in a dev workspace, and use this workspace to develop the notebook code and the DABs YAML template code.
-     - ( *Optional* ) Users can also directly associate the dev workspace with the GitHub repository using the [Databricks Git integration](https://docs.databricks.com/en/repos/index.html) to push code or create pull requests.
+1. Users can use DABs `databricks bundle` commands to deploy the code from their local development environment to a development Databricks workspace, and use this workspace to develop the notebook code and the DABs YAML template code.
+     - ( *Optional* ) Users can also directly associate the development workspace with the GitHub repository using the [Databricks Git integration](https://docs.databricks.com/en/repos/index.html) to push code or create pull requests.
 2. After development and debugging, users can push the local DABs folder/code to the GitHub repository, and then merge the code into the target branch (e.g., "main") via a Pull Request.
 3. Once the PR is merged into the target branch, it triggers the GitHub Actions workflow.
 4. In the QA stage of the GitHub Actions workflow, the pipeline retrieves the QA workspace PAT token from GitHub Secrets for authentication and deploys the resources defined in the DABs template to the QA workspace. In this sample solution, the QA stage also runs nutter tests to perform a sample test on one of the notebook functions.
@@ -85,13 +85,12 @@ We recommend creating Databricks PATs with an expiration date. Using access toke
 6. **Monitor the Workflow**:
    - Go to the "Actions" tab in your GitHub repository to monitor the workflow execution.
    - You can see the logs for each step of the process.
-   - ![GitHub Actions Workflow](../images/github-actions-workflow.png)
+   - You'll see each workflow step and its status (success/failure) including installation, deployment, and test execution.
 
 7. **Approve Production Deployment**:
    - Once the QA stage completes successfully, you'll need to approve the production deployment.
-   - Go to the running workflow and you'll see a "Review deployments" button.
-   - Approve the deployment to the production environment.
-   - ![Review Deployments](../images/github-review-deployment.png)
+   - Go to the running workflow and you'll see a "Review deployments" button in the production job.
+   - Click the button to review details and approve the deployment to the production environment.
 
 8. **Verify Deployed Resources**:
    - After the workflow completes, verify the deployed resources in your Databricks workspaces.
