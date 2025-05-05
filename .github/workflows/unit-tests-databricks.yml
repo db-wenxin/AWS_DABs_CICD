@@ -1,0 +1,56 @@
+name: Databricks Workspace Unit Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: 'Target environment to run tests on'
+        required: true
+        default: 'qa'
+        type: choice
+        options:
+          - qa
+          - prod
+
+jobs:
+  deploy-and-run-tests:
+    name: Deploy Tests to Databricks
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.target_environment }}
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+          databricks -v
+          
+      - name: Configure Databricks CLI
+        env:
+          DB_HOST: ${{ github.event.inputs.target_environment == 'qa' && secrets.DB_QA_HOST || secrets.DB_PROD_HOST }}
+          DB_TOKEN: ${{ github.event.inputs.target_environment == 'qa' && secrets.DB_QA_TOKEN || secrets.DB_PROD_TOKEN }}
+        run: |
+          echo $DB_TOKEN | databricks configure --host $DB_HOST --token
+          sed -i "/^ *host: ${{ github.event.inputs.target_environment == 'qa' && 'QA' || 'PROD' }}$/s|host: ${{ github.event.inputs.target_environment == 'qa' && 'QA' || 'PROD' }}|host: $DB_HOST|" databricks.yml
+          cat databricks.yml
+        
+      - name: Deploy and Run Unit Tests
+        run: |
+          echo "Deploying unit tests to ${{ github.event.inputs.target_environment }} environment"
+          databricks bundle deploy -t ${{ github.event.inputs.target_environment }} --force-lock
+          echo "Running unit tests in Databricks workspace"
+          databricks bundle run -t ${{ github.event.inputs.target_environment }} unittest-job
+          
+      - name: Get Test Results
+        run: |
+          echo "Retrieving test results from Databricks workspace"
+          # Optionally download test results from DBFS if they are saved there
+          # databricks fs cp dbfs:/databricks/unittest-results/results.xml ./test-results.xml 
