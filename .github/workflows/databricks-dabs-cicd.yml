@@ -1,0 +1,106 @@
+name: Databricks Asset Bundles CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    types: [ closed ]
+
+jobs:
+  qa-deployment:
+    name: QA Environment Deployment
+    runs-on: ubuntu-latest
+    environment: qa
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip nutter
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+          databricks -v
+          
+      - name: Download Private Package for Demo
+        run: pip3 download -d dist cowsay==6.1
+          
+      - name: Configure Databricks CLI
+        run: |
+          echo ${{ secrets.DB_QA_TOKEN }} | databricks configure --host ${{ secrets.DB_QA_HOST }} --token
+          sed -i "/^ *host: QA$/s|host: QA|host: ${{ secrets.DB_QA_HOST }}|" databricks.yml
+          cat databricks.yml
+        
+      - name: Deploy to QA Environment
+        run: |
+          echo "Build started on $(date)"
+          echo "Deploy and test in QA Env"
+          databricks bundle deploy -t qa --force-lock
+          echo "Test job and pipeline in QA environment"
+          databricks bundle run -t qa bundlesDevOpsDemo_pipeline
+          
+      - name: Run Nutter Tests
+        run: |
+          echo "Running Nutter tests"
+          databricks bundle run -t qa nutter-test
+          
+      - name: Start QA App
+        run: |
+          echo "Starting QA App"
+          databricks bundle run -t qa sample_app
+          echo "sample_app started"
+
+  production-deployment:
+    name: Production Environment Deployment
+    needs: qa-deployment
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deployment.outputs.deploy_url }}
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip nutter
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+          databricks -v
+          
+      - name: Download Private Package for Demo
+        run: pip3 download -d dist cowsay==6.1
+          
+      - name: Configure Databricks CLI
+        run: |
+          echo ${{ secrets.DB_PROD_TOKEN }} | databricks configure --host ${{ secrets.DB_PROD_HOST }} --token
+          sed -i "/^ *host: PROD$/s|host: PROD|host: ${{ secrets.DB_PROD_HOST }}|" databricks.yml
+          cat databricks.yml
+        
+      - name: Validate Bundle
+        run: databricks bundle validate -t prod
+        
+      - name: Deploy to Production
+        id: deployment
+        run: |
+          echo "Build started on $(date)"
+          echo "Building..."
+          databricks bundle deploy -t prod --force-lock
+          databricks bundle run -t prod bundlesDevOpsDemo_job
+          echo "deploy_url=${{ secrets.DB_PROD_HOST }}" >> $GITHUB_OUTPUT
+          
+      - name: Run Production Specific Job
+        run: |
+          echo "Build completed on $(date)"
+          databricks bundle run prodonly-cowsay -t prod 
