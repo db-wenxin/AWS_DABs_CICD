@@ -2,7 +2,7 @@ name: Databricks Asset Bundles CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, demo ]
   pull_request:
     branches: [ main ]
     types: [ closed ]
