@@ -30,6 +30,10 @@ resources:
             spark_version: ${var.spark_version}
             node_type_id: ${var.job_node_type}
             num_workers: 1
+            aws_attributes:
+              ebs_volume_count: 1
+              ebs_volume_size: 100
+              ebs_volume_type: GENERAL_PURPOSE_SSD
             spark_conf:
               "spark.databricks.cluster.profile": "singleNode"
               "spark.master": "local[*]"
