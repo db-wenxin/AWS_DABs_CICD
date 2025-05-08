@@ -18,9 +18,20 @@ resources:
           description: "Run all unit tests and save results"
           depends_on: []
           notebook_task:
-            notebook_path: ../src/unittest_notebook.py
+            notebook_path: ./src/unittest_notebook.py
             base_parameters: {}
+          job_cluster_key: unittest-cluster
           timeout_seconds: 1200
           max_retries: 0
           min_retry_interval_millis: 60000
-      # job_clusters block removed as per serverless configuration 
+      job_clusters:
+        - job_cluster_key: unittest-cluster
+          new_cluster:
+            spark_version: ${var.spark_version}
+            node_type_id: ${var.job_node_type}
+            num_workers: 1
+            spark_conf:
+              "spark.databricks.cluster.profile": "singleNode"
+              "spark.master": "local[*]"
+            custom_tags:
+              "ResourceClass": "SingleNode" 
