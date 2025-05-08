@@ -24,7 +24,7 @@ jobs:
           
       - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip nutter
+          python -m pip install --upgrade pip nutter wheel
           curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
           databricks -v
           
@@ -75,7 +75,7 @@ jobs:
           
       - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip nutter
+          python -m pip install --upgrade pip nutter wheel
           curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
           databricks -v
           
