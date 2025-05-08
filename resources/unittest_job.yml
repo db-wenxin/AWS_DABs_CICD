@@ -18,7 +18,7 @@ resources:
           description: "Run all unit tests and save results"
           depends_on: []
           notebook_task:
-            notebook_path: ./src/unittest_notebook.py
+            notebook_path: ../src/unittest_notebook.py
             base_parameters: {}
           job_cluster_key: unittest-cluster
           timeout_seconds: 1200
