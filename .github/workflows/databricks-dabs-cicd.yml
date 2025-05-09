@@ -80,7 +80,10 @@ jobs:
           databricks -v
           
       - name: Download Private Package for Demo
-        run: pip3 download -d dist cowsay==6.1
+        run: |
+          pip3 download -d dist cowsay==6.1
+          echo "Contents of dist directory after download:"
+          ls -R dist
           
       - name: Configure Databricks CLI
         run: |
@@ -95,6 +98,8 @@ jobs:
         id: deployment
         run: |
           echo "Build started on $(date)"
+          echo "Listing dist directory before bundle deploy:"
+          ls -R dist
           echo "Building..."
           databricks bundle deploy -t prod --force-lock
           databricks bundle run -t prod bundlesDevOpsDemo_job
