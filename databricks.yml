@@ -184,8 +184,7 @@ targets:
               spark_python_task:
                 python_file: ./src/cowsay.py
               libraries:
-                - whl: dist/cowsay-6.1-*.whl
-                #- whl: ./dist/cowsay-6.1-py3-none-any.whl
+                - whl: ./dist/cowsay-6.1-*.whl
 
           job_clusters:
             - job_cluster_key: default
