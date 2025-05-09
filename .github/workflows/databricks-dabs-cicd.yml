@@ -61,7 +61,7 @@ jobs:
     needs: qa-deployment
     runs-on: ubuntu-latest
     environment:
-      name: production
+      name: prod
       url: ${{ steps.deployment.outputs.deploy_url }}
     
     steps:
