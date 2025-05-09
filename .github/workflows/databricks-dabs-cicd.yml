@@ -84,7 +84,11 @@ jobs:
           pip3 download -d dist cowsay==6.1
           echo "Contents of dist directory after download:"
           ls -R dist
-          
+          echo "Current working directory:"
+          pwd
+          echo "Full path of wheel file:"
+          realpath dist/cowsay-6.1-py3-none-any.whl
+                    
       - name: Configure Databricks CLI
         run: |
           echo ${{ secrets.DB_PROD_TOKEN }} | databricks configure --host ${{ secrets.DB_PROD_HOST }} --token
