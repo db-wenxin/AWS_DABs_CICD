@@ -14,4 +14,4 @@ resources:
           num_workers: 1
           node_type_id: ${var.dlt_node_type}
           #serverless: false
-          serverless: true
+          #serverless: true
