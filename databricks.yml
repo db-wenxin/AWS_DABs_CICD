@@ -6,12 +6,12 @@ include:
   - resources/*.yml
 # 'run_as' must be set for all jobs when using 'mode: production'
 run_as: 
-  user_name: sample_user@example_databricks.com
+  user_name: wenxin.liu@databricks.com #sample_user@example_databricks.com
 
 variables:
   email_notifications_target:
     description: The email to receive the job notifications.
-    default: sample_user@example_databricks.com
+    default: wenxin.liu@databricks.com #sample_user@example_databricks.com
   job_node_type:
     description: The compute type for job cluster
     default: r6i.large
@@ -20,7 +20,7 @@ variables:
     default: r6i.large
   spark_version:
     description: The Databricks cluster runtime version
-    default: 13.3.x-scala2.12
+    default: 15.4.x-scala2.12
   default_warehouseid:
     description: Use this to query existing warehouse.
     lookup:
@@ -105,7 +105,7 @@ targets:
       apps:
         sample_app:
           name: "qa-sample-app"
-          source_code_path: ./src/apps/qa-app
+          source_code_path: ./src/qa-app
           description: "A Streamlit app that uses a SQL warehouse"
           config:
             command:
@@ -184,8 +184,9 @@ targets:
               spark_python_task:
                 python_file: ./src/cowsay.py
               libraries:
-                - whl: ./dist/cowsay-6.1-*.whl
-
+                #- whl: dist/cowsay-6.1-py3-none-any.whl
+                - pypi:
+                    package: cowsay==6.1
           job_clusters:
             - job_cluster_key: default
               new_cluster:

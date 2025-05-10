@@ -24,7 +24,7 @@ jobs:
           
       - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip nutter
+          python -m pip install --upgrade pip nutter wheel
           curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
           databricks -v
           
@@ -75,13 +75,20 @@ jobs:
           
       - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip nutter
+          python -m pip install --upgrade pip nutter wheel
           curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
           databricks -v
           
       - name: Download Private Package for Demo
-        run: pip3 download -d dist cowsay==6.1
-          
+        run: |
+          pip3 download -d dist cowsay==6.1
+          echo "Contents of dist directory after download:"
+          ls -R dist
+          echo "Current working directory:"
+          pwd
+          echo "Full path of wheel file:"
+          realpath dist/cowsay-6.1-py3-none-any.whl
+                    
       - name: Configure Databricks CLI
         run: |
           echo ${{ secrets.DB_PROD_TOKEN }} | databricks configure --host ${{ secrets.DB_PROD_HOST }} --token
@@ -95,6 +102,8 @@ jobs:
         id: deployment
         run: |
           echo "Build started on $(date)"
+          echo "Listing dist directory before bundle deploy:"
+          ls -R dist
           echo "Building..."
           databricks bundle deploy -t prod --force-lock
           databricks bundle run -t prod bundlesDevOpsDemo_job

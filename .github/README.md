@@ -168,4 +168,4 @@ To add or modify tests:
 4. [GitHub Environments](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment)
 5. [Databricks CLI Installation Guide](https://docs.databricks.com/en/dev-tools/cli/install.html)
 6. [Pytest Documentation](https://docs.pytest.org/)
-7. [Running Python Tests in Databricks](https://docs.databricks.com/en/delta-live-tables/testing.html) 
+7. [Running Python Tests in Databricks](https://docs.databricks.com/en/delta-live-tables/testing.html)

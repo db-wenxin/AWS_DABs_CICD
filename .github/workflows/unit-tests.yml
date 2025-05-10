@@ -54,9 +54,10 @@ jobs:
           
           # Try to import the module
           try:
-              from bundlesDevOpsDemo import main
+              import bundlesDevOpsDemo
+              from bundlesDevOpsDemo.main import get_taxis, get_spark, main
               HAS_MODULE = True
-              print("Successfully imported bundlesDevOpsDemo.main")
+              print("Successfully imported bundlesDevOpsDemo components")
           except ImportError as e:
               HAS_MODULE = False
               print(f"Import error: {e}")
@@ -76,12 +77,12 @@ jobs:
               @unittest.skipIf(not HAS_MODULE, "Module not available")
               def test_get_taxis_function_exists(self):
                   """Test if get_taxis function exists"""
-                  self.assertTrue(hasattr(main, 'get_taxis'), "get_taxis function should exist")
+                  self.assertTrue(callable(get_taxis), "get_taxis function should exist and be callable")
                   
               @unittest.skipIf(not HAS_MODULE, "Module not available")
               def test_get_spark_function_exists(self):
                   """Test if get_spark function exists"""
-                  self.assertTrue(hasattr(main, 'get_spark'), "get_spark function should exist")
+                  self.assertTrue(callable(get_spark), "get_spark function should exist and be callable")
               
               # Always run this test to verify file existence
               def test_main_file_exists(self):
